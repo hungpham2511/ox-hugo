@@ -4082,6 +4082,20 @@ links."
     buffer))
 
 
+(defun org-hugo--add-jekyll-date (path)
+  "Return a new PATH with jekyll date pre-prended to file name.
+
+Jekyll requires each post to have a YEAR-MONTH-DAY string
+pre-pended to each post name.  This function pre-pends a dummy
+0000-0-0 string to filename."
+  (let* ((dir (file-name-directory path))
+         (file (file-name-nondirectory path))
+         (file (format "0000-0-0-%s" file)))
+
+    (message "[DEBUG] %s" file)
+    (concat dir file)))
+
+
 
 ;;; Interactive functions
 
@@ -4157,12 +4171,16 @@ Return output file's name."
                  'hugo subtreep visible-only)
                 (org-export--get-buffer-attributes)
                 (org-export-get-environment 'hugo subtreep)))
-         (pub-dir (org-hugo--get-pub-dir info))
-         (outfile (org-export-output-file-name ".md" subtreep pub-dir)))
-    ;; (message "[org-hugo-export-to-md DBG] section-dir = %s" section-dir)
+         ;; (pub-dir (org-hugo--get-pub-dir info))
+         (pub-dir "/home/hung/git/hungpham2511.github.io/_posts")
+         (outfile (org-hugo--add-jekyll-date
+                   (org-export-output-file-name ".md" subtreep pub-dir)))
+         )
+    ;; (message "[org-hugo-export-to-md DBG] section-dir = %s" outfile)
     (prog1
         (org-export-to-file 'hugo outfile async subtreep visible-only)
       (org-hugo--after-export-function info outfile))))
+
 
 ;;;###autoload
 (defun org-hugo-export-wim-to-md (&optional all-subtrees async visible-only noerror)
