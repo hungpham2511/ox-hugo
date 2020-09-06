@@ -207,8 +207,13 @@ Required fixes:
                        "\\\\\\]")))
           (while (re-search-forward regexp nil :noerror)
             (let* ((sc-body (match-string-no-properties 1)))
-              ;; (message "square bracket [%s]" sc-body)
+              ;; (message "[ox-hugo] [DBG] square bracket [%s]" sc-body)
               (replace-match (format "[%s]" sc-body) :fixedcase)))))
+
+      ;; Fix caret: \^ -> ^
+      (save-excursion
+          (while (search-forward "\\^" nil :noerror)
+            (replace-match "^")))
 
       (buffer-substring-no-properties (point-min) (point-max)))))
 
