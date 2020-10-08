@@ -5,6 +5,9 @@
 NOTE TO FUTURE CONTRIBUTORS: I plan to merge this package into GNU
 Elpa or Org source at some point.
 
+
+
+
 So you will need to assign your copyright to FSF in order to get your
 patches accepted.
 
