@@ -408,6 +408,7 @@ directory where all Hugo posts should go by default."
   :type 'directory)
 ;;;###autoload (put 'org-hugo-section 'safe-local-variable 'stringp)
 
+
 (defcustom org-hugo-front-matter-format "toml"
   "Front-matter format.
 This variable can be set to either \"toml\" or \"yaml\"."
@@ -788,6 +789,7 @@ newer."
                    (:hugo-section "HUGO_SECTION" nil org-hugo-section)
                    (:hugo-bundle "HUGO_BUNDLE" nil nil)
                    (:hugo-base-dir "HUGO_BASE_DIR" nil nil)
+                   (:hugo-jekyll-base-dir "HUGO_JEKYLL_BASE_DIR" nil nil)
                    (:hugo-code-fence "HUGO_CODE_FENCE" nil t) ;Prefer to generate triple-backquoted Markdown code blocks by default.
                    (:hugo-use-code-for-kbd "HUGO_USE_CODE_FOR_KBD" nil org-hugo-use-code-for-kbd)
                    (:hugo-prefer-hyphen-in-tags "HUGO_PREFER_HYPHEN_IN_TAGS" nil org-hugo-prefer-hyphen-in-tags)
@@ -1274,21 +1276,32 @@ symbol, number or a non-empty string.  Examples:
 The publication directory is created if it does not exist.
 
 INFO is a plist used as a communication channel."
-  (let* ((base-dir (if (plist-get info :hugo-base-dir)
-                       (file-name-as-directory (plist-get info :hugo-base-dir))
-                     (user-error "It is mandatory to set the HUGO_BASE_DIR property")))
-         (content-dir "content/")
-         (section-path (org-hugo--get-section-path info))
-         (bundle-dir (let ((bundle-path (or ;Hugo bundle set in the post subtree gets higher precedence
-                                         (org-hugo--entry-get-concat nil "EXPORT_HUGO_BUNDLE" "/")
-                                         (plist-get info :hugo-bundle)))) ;This is mainly to support per-file flow
-                       (if bundle-path
-                           (file-name-as-directory bundle-path)
-                         "")))
-         (pub-dir (let ((dir (concat base-dir content-dir section-path bundle-dir)))
-                    (make-directory dir :parents) ;Create the directory if it does not exist
-                    dir)))
-    (file-truename pub-dir)))
+  ;; If this variable is defined, convert to use jekyll
+  (if (plist-get info :hugo-jekyll-base-dir)
+      (progn
+        (message "found keyll attribute")
+        (let* ((base-dir (plist-get info :hugo-jekyll-base-dir))
+               (base-dir (file-name-as-directory base-dir))
+               (content-dir "_posts/")
+               (pub-dir (concat base-dir content-dir)))
+          (message pub-dir)
+          (file-truename pub-dir)))
+    ;; Otherwise use the same 
+    (let* ((base-dir (if (plist-get info :hugo-base-dir)
+                         (file-name-as-directory (plist-get info :hugo-base-dir))
+                       (user-error "It is mandatory to set the HUGO_BASE_DIR property")))
+           (content-dir "content/")
+           (section-path (org-hugo--get-section-path info))
+           (bundle-dir (let ((bundle-path (or ;Hugo bundle set in the post subtree gets higher precedence
+                                           (org-hugo--entry-get-concat nil "EXPORT_HUGO_BUNDLE" "/")
+                                           (plist-get info :hugo-bundle)))) ;This is mainly to support per-file flow
+                         (if bundle-path
+                             (file-name-as-directory bundle-path)
+                           "")))
+           (pub-dir (let ((dir (concat base-dir content-dir section-path bundle-dir)))
+                      (make-directory dir :parents) ;Create the directory if it does not exist
+                      dir)))
+      (file-truename pub-dir))))
 
 ;;;; Get the publish date for the current post
 (defun org-hugo--get-date (info fmt)
@@ -4171,20 +4184,19 @@ Return output file's name."
                  'hugo subtreep visible-only)
                 (org-export--get-buffer-attributes)
                 (org-export-get-environment 'hugo subtreep)))
-         ;; (pub-dir (org-hugo--get-pub-dir info))
-         (pub-dir "/home/hung/git/hungpham2511.github.io/_posts")
+         (pub-dir (org-hugo--get-pub-dir info))
+         ;; (pub-dir "/home/hung/git/hungpham2511.github.io/_posts")
          (outfile (org-hugo--add-jekyll-date
-                   (org-export-output-file-name ".md" subtreep pub-dir)))
-         )
-    ;; (message "[org-hugo-export-to-md DBG] section-dir = %s" outfile)
+                   (org-export-output-file-name ".md" subtreep pub-dir))))
+    (message "[org-hugo-export-to-md DBG] section-dir = %s" outfile)
     (prog1
         (org-export-to-file 'hugo outfile async subtreep visible-only)
-      (org-hugo--after-export-function info outfile))))
+      (org-hugo--after-export-function info outfile)))
 
 
 ;;;###autoload
-(defun org-hugo-export-wim-to-md (&optional all-subtrees async visible-only noerror)
-  "Export the current subtree/all subtrees/current file to a Hugo post.
+  (defun org-hugo-export-wim-to-md (&optional all-subtrees async visible-only noerror)
+    "Export the current subtree/all subtrees/current file to a Hugo post.
 
 This is an Export \"What I Mean\" function:
 
@@ -4335,7 +4347,6 @@ buffer and returned as a string in Org format."
     (kill-new info-md)
     (message "%s" info-org)
     info-org))
-
 
 (provide 'ox-hugo)
 
