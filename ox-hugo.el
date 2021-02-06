@@ -790,6 +790,7 @@ newer."
                    (:hugo-bundle "HUGO_BUNDLE" nil nil)
                    (:hugo-base-dir "HUGO_BASE_DIR" nil nil)
                    (:hugo-jekyll-base-dir "HUGO_JEKYLL_BASE_DIR" nil nil)
+                   (:hugo-toc "HUGO_TOC" nil nil)
                    (:hugo-code-fence "HUGO_CODE_FENCE" nil t) ;Prefer to generate triple-backquoted Markdown code blocks by default.
                    (:hugo-use-code-for-kbd "HUGO_USE_CODE_FOR_KBD" nil org-hugo-use-code-for-kbd)
                    (:hugo-prefer-hyphen-in-tags "HUGO_PREFER_HYPHEN_IN_TAGS" nil org-hugo-prefer-hyphen-in-tags)
@@ -3387,6 +3388,7 @@ INFO is a plist used as a communication channel."
                  (categories . ,categories)
                  (type . ,(plist-get info :hugo-type))
                  (url . ,(plist-get info :hugo-url))
+                 (toc . ,(plist-get info :hugo-toc))
                  (videos . ,(org-hugo--delim-str-to-list (plist-get info :hugo-videos)))
                  (draft . ,draft)
                  (headless . ,headless)
@@ -3453,7 +3455,7 @@ are \"toml\" and \"yaml\"."
     (dolist (pair data)
       (let ((key (symbol-name (car pair)))
             (value (cdr pair)))
-        ;; (message "[hugo fm key value DBG] %S %S" key value)
+        (message "[hugo fm key value DBG] %S %S" key value)
         (unless (or (null value) ;Skip writing front-matter variables whose value is nil
                     (and (stringp value) ;or an empty string.
                          (string= "" value)))
@@ -4191,12 +4193,12 @@ Return output file's name."
     (message "[org-hugo-export-to-md DBG] section-dir = %s" outfile)
     (prog1
         (org-export-to-file 'hugo outfile async subtreep visible-only)
-      (org-hugo--after-export-function info outfile)))
+      (org-hugo--after-export-function info outfile))))
 
 
 ;;;###autoload
-  (defun org-hugo-export-wim-to-md (&optional all-subtrees async visible-only noerror)
-    "Export the current subtree/all subtrees/current file to a Hugo post.
+(defun org-hugo-export-wim-to-md (&optional all-subtrees async visible-only noerror)
+  "Export the current subtree/all subtrees/current file to a Hugo post.
 
 This is an Export \"What I Mean\" function:
 
