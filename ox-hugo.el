@@ -1280,12 +1280,12 @@ INFO is a plist used as a communication channel."
   ;; If this variable is defined, convert to use jekyll
   (if (plist-get info :hugo-jekyll-base-dir)
       (progn
-        (message "found keyll attribute")
+        (message "[ox-hugo] found jekyll base-dir attribute")
         (let* ((base-dir (plist-get info :hugo-jekyll-base-dir))
                (base-dir (file-name-as-directory base-dir))
                (content-dir "_posts/")
                (pub-dir (concat base-dir content-dir)))
-          (message pub-dir)
+          (message "[ox-hugo] pubdir %s" pub-dir)
           (file-truename pub-dir)))
     ;; Otherwise use the same 
     (let* ((base-dir (if (plist-get info :hugo-base-dir)
@@ -2207,6 +2207,12 @@ and rewrite link paths to make blogging more seamless."
             ;; (message "[org-hugo-link DBG] useful-parent-type: %s"
             ;;          (org-element-type useful-parent))
             (cond
+             ;; Just a hack; use markdown syntax for all images.
+             (t
+              (let ((alt-text (if alt-text
+                                  alt-text
+                                "")))
+                (format "![%s](/assets/%s)" alt-text source)))
              (;; Use the Markdown image syntax if the image is inline and
               ;; there are no HTML attributes for the image, or just one
               ;; attribute, the `alt-text'.
@@ -2391,7 +2397,7 @@ PATH is the path to the image or any other attachment.
 
 INFO is a plist used as a communication channel."
   ;; (message "[ox-hugo attachment DBG] The Hugo section is: %s" (plist-get info :hugo-section))
-  ;; (message "[ox-hugo attachment DBG] The Hugo base dir is: %s" (plist-get info :hugo-base-dir))
+  (message "[ox-hugo attachment DBG] The Hugo base dir is: %s" (plist-get info :hugo-base-dir))
   (let* ((pub-dir (org-hugo--get-pub-dir info)) ;This needs to happen first so that the check for HUGO_BASE_DIR happens.
          (hugo-base-dir (file-name-as-directory (plist-get info :hugo-base-dir)))
          (path-unhexified (url-unhex-string path))
@@ -2410,18 +2416,18 @@ INFO is a plist used as a communication channel."
                             (file-name-base (directory-file-name bundle-dir)))))))
          (static-dir (file-truename
                       (file-name-as-directory
-                       (expand-file-name "static" hugo-base-dir))))
+                       (expand-file-name "assets" hugo-base-dir))))
          (dest-dir (or bundle-dir static-dir))
          ret)
     (unless (file-directory-p static-dir)
       (user-error "Please create the %s directory" static-dir))
-    ;; (message "[ox-hugo DBG attch rewrite] Image export dir is: %s" static-dir)
-    ;; (message "[ox-hugo DBG attch rewrite] path: %s" path)
-    ;; (message "[ox-hugo DBG attch rewrite] path-true: %s" path-true)
-    ;; (message "[ox-hugo DBG attch rewrite] bundle-dir: %s" bundle-dir)
-    ;; (message "[ox-hugo DBG attch rewrite] bundle-name: %s" bundle-name)
-    ;; (message "[ox-hugo DBG attch rewrite] default-dir: %s" default-directory)
-    ;; (message "[ox-hugo DBG attch rewrite] dest-dir: %s" dest-dir)
+    (message "[ox-hugo DBG attch rewrite] Image export dir is: %s" static-dir)
+    (message "[ox-hugo DBG attch rewrite] path: %s" path)
+    (message "[ox-hugo DBG attch rewrite] path-true: %s" path-true)
+    (message "[ox-hugo DBG attch rewrite] bundle-dir: %s" bundle-dir)
+    (message "[ox-hugo DBG attch rewrite] bundle-name: %s" bundle-name)
+    (message "[ox-hugo DBG attch rewrite] default-dir: %s" default-directory)
+    (message "[ox-hugo DBG attch rewrite] dest-dir: %s" dest-dir)
     (if (and (file-exists-p path-true)
              (member (file-name-extension path-unhexified) exportables)
              (file-directory-p dest-dir))
